@@ -123,6 +123,7 @@
 				TargetAttributes = {
 					9B4ABDD71DFECDCC00DB5633 = {
 						CreatedOnToolsVersion = 8.1;
+						DevelopmentTeam = 6D3WRA4H8K;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -296,7 +297,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 6D3WRA4H8K;
 				INFOPLIST_FILE = SwirlGame/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.practice.SwirlGame;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -308,7 +311,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 6D3WRA4H8K;
 				INFOPLIST_FILE = SwirlGame/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.practice.SwirlGame;
 				PRODUCT_NAME = "$(TARGET_NAME)";

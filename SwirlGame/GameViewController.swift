@@ -36,11 +36,11 @@ class GameViewController: UIViewController {
         scene.showAlertAction = {[weak self] Void in
             //Show Alert
             let alertController = UIAlertController(title: "Alert", message: "Are you want to restart the game?", preferredStyle: .alert)
-            let okAlertAction = UIAlertAction(title: "OK", style: .default, handler: { action  in
+            let okAlertAction = UIAlertAction(title: "Yes", style: .default, handler: { action  in
                 self?.scene.swirlsLayer.removeAllChildren()
                 self?.shuffle()
             })
-            let cancelAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+            let cancelAlertAction = UIAlertAction(title: "No", style: .cancel, handler: nil)
             alertController.addAction(cancelAlertAction)
             alertController.addAction(okAlertAction)
             self?.present(alertController, animated: true, completion: nil)

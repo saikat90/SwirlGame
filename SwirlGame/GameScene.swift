@@ -25,10 +25,10 @@ class GameScene: SKScene {
     let swirlsLayer = SKNode()
     let tilesLayer = SKNode()
     let newGameButton = SKSpriteNode(imageNamed: "NewGame")
+    var previousMatches = Set<Chain>()
     
     // Sprite that is drawn on top of the swirl that the player is trying to swap.
-    var selectionSprite = SKSpriteNode()
-    
+    var selectionSprites = [SKSpriteNode]()
     var showAlertAction: ((Void) -> Void)?
     
     // MARK: Init
@@ -128,7 +128,6 @@ class GameScene: SKScene {
         if success {
             // The touch must be on a cookie, not on an empty tile.
             if let swirl = level.swirlAt(column: column, row: row) {
-                showSelectionIndicator(for: swirl)
                 handleMatches(swirl: swirl)
             }
         }
@@ -146,18 +145,24 @@ class GameScene: SKScene {
         }
     }
     
-    func showSelectionIndicator(for swirl: Swirl) {
-        if selectionSprite.parent != nil {
-            selectionSprite.removeFromParent()
-        }
+    func showSelectionIndicator(for swirls: [Swirl]) {
+         _ = selectionSprites.map({
+            if  $0.parent != nil {
+                $0.removeFromParent()
+            }
+        })
+        selectionSprites.removeAll()
         
+        for swirl in swirls {
         if let sprite = swirl.sprite {
+            let selectionSprite = SKSpriteNode()
             let texture = SKTexture(imageNamed: swirl.swirlType.highlightedSpriteName)
             selectionSprite.size = CGSize(width: TileWidth, height: TileHeight)
             selectionSprite.run(SKAction.setTexture(texture))
-            
             sprite.addChild(selectionSprite)
+            selectionSprites.append(selectionSprite)
             selectionSprite.alpha = 1.0
+        }
         }
     }
     
@@ -247,12 +252,21 @@ class GameScene: SKScene {
     // holes with new cookies. While this happens, the user cannot interact with
     // the app.
     func handleMatches(swirl: Swirl) {
+
         // Detect if there are any matches left.
         level.removeMatchSet = Set<Chain>()
-        let chains = level.removeMatches(swirl: swirl)
-      
+        let matchSet = level.detectMatch(swirl: swirl)
+        
+        if !previousMatches.map({ Array($0.swirls) }).reduce([], +).contains(swirl) {
+        previousMatches = matchSet
+        showSelectionIndicator(for: matchSet.map({ Array($0.swirls) }).reduce([], +))
+        return
+        }
+        
+        previousMatches = level.removeMatches()
+        
         // First, remove any matches...
-        animateMatchedCookies(for: chains) {
+        animateMatchedCookies(for: previousMatches) {
             
             // ...then shift down any cookies that have a hole below them...
             let columns = self.level.fillHoles()

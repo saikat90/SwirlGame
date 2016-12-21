@@ -152,7 +152,7 @@ class Level {
         }
     }
     
-    func detectMatch(swirl: Swirl)  {
+    func detectMatch(swirl: Swirl) -> Set<Chain>  {
         let chain = Chain(chainType: .vertical)
         verticalMatchUpward(swirl: swirl)
         verticalMatchDownward(swirl: swirl)
@@ -160,13 +160,14 @@ class Level {
         horizontalMatchBackward(swirl: swirl)
         chain.add(swirl: swirl)
         removeMatchSet.insert(chain)
+        return removeMatchSet
     }
     
     // Detects whether there are any chains of 3 or more swirls, and removes
     // them from the level.
     // Returns a set containing Chain objects, which describe the swirls
     // that were removed.
-    func removeMatches(swirl: Swirl) -> Set<Chain> {
+    func removeMatches() -> Set<Chain> {
         //        let horizontalChains = detectMatch(swirl: swirl)
         // let verticalChains = detectVerticalMatches()
         
@@ -174,9 +175,7 @@ class Level {
         // whether a swirl is in both the horizontal & vertical chains sets and
         // whether it is the first or last in the array (at a corner). Then you
         // create a new Chain object with the new type and remove the other two.
-        detectMatch(swirl: swirl)
-        
-        removeSwirls(removeMatchSet)
+       removeSwirls(removeMatchSet)
         //  removeSwirls(verticalChains)
         
         return removeMatchSet
