@@ -211,6 +211,35 @@ class GameScene: SKScene {
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
     
+    func animateHorizontalCookiesFor(columns: [[Swirl]], completion: @escaping () -> ()) {
+        var longestDuration: TimeInterval = 0
+        for array in columns {
+            for (idx, swirl) in array.enumerated() {
+                let newPosition = pointFor(column: swirl.column, row: swirl.row)
+                
+                // The further away from the hole you are, the bigger the delay
+                // on the animation.
+                let delay = 0.05 + 0.15*TimeInterval(idx)
+                
+                let sprite = swirl.sprite!   // sprite always exists at this point
+                
+                // Calculate duration based on far cookie has to fall (0.1 seconds
+                // per tile).
+                let duration = TimeInterval(((sprite.position.x - newPosition.x) / TileWidth) * 0.1)
+                sprite.position = newPosition
+                longestDuration = max(longestDuration, duration + delay)
+                
+                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                moveAction.timingMode = .easeOut
+                sprite.run(
+                    SKAction.sequence([
+                        SKAction.wait(forDuration: delay)]))
+            }
+        }
+        
+        // Wait until all the cookies have fallen down before we continue.
+        run(SKAction.wait(forDuration: longestDuration), completion: completion)
+    }
     
     
     
@@ -227,10 +256,13 @@ class GameScene: SKScene {
             
             // ...then shift down any cookies that have a hole below them...
             let columns = self.level.fillHoles()
-            print("count \(columns.count)")
+            let horizonatalHoles = self.level.fillRowsHorizontal()
             //let rows = self.level.fillRows()
             
             self.animateFallingCookiesFor(columns: columns) {
+                self.animateHorizontalCookiesFor(columns: horizonatalHoles, completion: {
+                    
+                })
                 // Keep repeating this cycle until there are no more matches.
                 //self.handleMatches()
             }

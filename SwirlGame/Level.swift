@@ -242,8 +242,30 @@ class Level {
     }
  
     
-    func fillRowsHorizontal() {
-        
+    func fillRowsHorizontal() -> [[Swirl]] {
+        var horizontalHoles = [[Swirl]]()
+        for column in 0..<NumColumns {
+            var array = [Swirl]()
+            if tiles[column, 0] != nil && swirls[column, 0] == nil {
+                for lookup in (column + 1)..<NumColumns {
+                    if swirls[lookup, 0] != nil {
+                        for row in 0..<NumRows {
+                            if let swirl = swirls[lookup, row] {
+                                swirls[column, row] = swirl
+                                swirl.column = column
+                                swirls[lookup, row] = nil
+                                array.append(swirl)
+                            }
+                        }
+                        break
+                    }
+                }
+                if !array.isEmpty {
+                    horizontalHoles.append(array)
+                }
+            }
+        }
+        return horizontalHoles
     }
     
 }
