@@ -31,6 +31,15 @@ class GameScene: SKScene {
     var selectionSprites = [SKSpriteNode]()
     var showAlertAction: ((Void) -> Void)?
     
+    var levelTimerLabel = SKLabelNode(fontNamed: "ArialMT")
+    
+    //Immediately after leveTimerValue variable is set, update label's text
+    var levelTimerValue: Int = 120 {
+        didSet {
+            levelTimerLabel.text = "Time left: \(levelTimerValue)"
+        }
+    }
+
     // MARK: Init
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder) is not used in this app")
@@ -53,6 +62,8 @@ class GameScene: SKScene {
         newGameButton.name = "newGame"
         addChild(newGameButton)
         
+        createlevelTimer()
+        
         // Add a new node that is the container for all other layers on the playing
         // field. This gameLayer is also centered in the screen.
         addChild(gameLayer)
@@ -67,11 +78,35 @@ class GameScene: SKScene {
         gameLayer.addChild(tilesLayer)
         
         // This layer holds the Cookie sprites. The positions of these sprites
-        // are relative to the cookiesLayer's bottom-left corner.
+        // are relative to the SwirlLayer's bottom-left corner.
         swirlsLayer.position = layerPosition
         gameLayer.addChild(swirlsLayer)
     }
     
+
+    
+    
+    func createlevelTimer() {
+        levelTimerLabel.fontColor = SKColor.white
+        levelTimerLabel.fontSize = 24
+        levelTimerLabel.position = CGPoint(x: 0, y: frame.size.height / 3)
+        levelTimerLabel.text = "Time left: \(levelTimerValue)"
+        addChild(levelTimerLabel)
+        
+        let wait = SKAction.wait(forDuration: 0.5) //change countdown speed here
+        let block = SKAction.run({
+            [unowned self] in
+            
+            if self.levelTimerValue > 0{
+                self.levelTimerValue -= 1
+            }else{
+                self.removeAction(forKey: "countdown")
+            }
+        })
+        let sequence = SKAction.sequence([wait,block])
+        
+        run(SKAction.repeatForever(sequence), withKey: "countdown")
+    }
     
     
     // MARK: Level Setup
@@ -118,6 +153,8 @@ class GameScene: SKScene {
         
         // If next button is touched, start transition to second scene
         if node.name == "newGame" {
+            
+            createlevelTimer()
            showAlertAction?()
         }
         
@@ -135,7 +172,7 @@ class GameScene: SKScene {
     
     
     func convertPoint(_ point: CGPoint) -> (success: Bool, column: Int, row: Int) {
-        // Is this a valid location within the cookies layer? If yes,
+        // Is this a valid location within the Swirl layer? If yes,
         // calculate the corresponding row and column numbers.
         if point.x >= 0 && point.x < CGFloat(NumColumns)*TileWidth &&
             point.y >= 0 && point.y < CGFloat(NumRows)*TileHeight {
@@ -153,11 +190,14 @@ class GameScene: SKScene {
         })
         selectionSprites.removeAll()
         
+        
         for swirl in swirls {
         if let sprite = swirl.sprite {
             let selectionSprite = SKSpriteNode()
             let texture = SKTexture(imageNamed: swirl.swirlType.highlightedSpriteName)
             selectionSprite.size = CGSize(width: TileWidth, height: TileHeight)
+            let shake = SKAction.shake(duration: 10.0)
+            selectionSprite.run(shake)
             selectionSprite.run(SKAction.setTexture(texture))
             sprite.addChild(selectionSprite)
             selectionSprites.append(selectionSprite)
@@ -166,13 +206,10 @@ class GameScene: SKScene {
         }
     }
     
-    func animateMatchedCookies(for chains: Set<Chain>, completion: @escaping () -> ()) {
+    func animateMatchedSwirl(for chains: Set<Chain>, completion: @escaping () -> ()) {
         for chain in chains {
             for swirl in chain.swirls {
                 
-                // It may happen that the same Cookie object is part of two chains
-                // (L-shape or T-shape match). In that case, its sprite should only be
-                // removed once.
                 if let sprite = swirl.sprite {
                     if sprite.action(forKey: "removing") == nil {
                         let scaleAction = SKAction.scale(to: 0.1, duration: 0.3)
@@ -186,7 +223,7 @@ class GameScene: SKScene {
         run(SKAction.wait(forDuration: 0.3), completion: completion)
     }
     
-    func animateFallingCookiesFor(columns: [[Swirl]], completion: @escaping () -> ()) {
+    func animateFallingSwirlFor(columns: [[Swirl]], completion: @escaping () -> ()) {
         var longestDuration: TimeInterval = 0
         for array in columns {
             for (idx, swirl) in array.enumerated() {
@@ -212,44 +249,41 @@ class GameScene: SKScene {
             }
         }
         
-        // Wait until all the cookies have fallen down before we continue.
+        // Wait until all the Swirl have fallen down before we continue.
         run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
     
-    func animateHorizontalCookiesFor(columns: [[Swirl]], completion: @escaping () -> ()) {
+    func animateHorizontalSwirlFor(columns: [[Swirl]], completion: @escaping () -> ()) {
         var longestDuration: TimeInterval = 0
         for array in columns {
-            for (idx, swirl) in array.enumerated() {
+            for (_ , swirl) in array.enumerated() {
                 let newPosition = pointFor(column: swirl.column, row: swirl.row)
                 
                 // The further away from the hole you are, the bigger the delay
                 // on the animation.
-                let delay = 0.05 + 0.15*TimeInterval(idx)
+               // let delay = 0.05 + 0.15*TimeInterval(idx)
                 
                 let sprite = swirl.sprite!   // sprite always exists at this point
                 
                 // Calculate duration based on far cookie has to fall (0.1 seconds
                 // per tile).
-                let duration = TimeInterval(((sprite.position.x - newPosition.x) / TileWidth) * 0.1)
+                //let duration = TimeInterval(((sprite.position.x - newPosition.x) / TileWidth) * 0.1)
                 sprite.position = newPosition
-                longestDuration = max(longestDuration, duration + delay)
-                
-                let moveAction = SKAction.move(to: newPosition, duration: duration)
+                longestDuration = max(longestDuration, 0.01)
+                let moveAction = SKAction.move(to: newPosition, duration: 0.01)
                 moveAction.timingMode = .easeOut
-                sprite.run(
-                    SKAction.sequence([
-                        SKAction.wait(forDuration: delay)]))
+                sprite.run(moveAction)
             }
         }
         
-        // Wait until all the cookies have fallen down before we continue.
-        run(SKAction.wait(forDuration: longestDuration), completion: completion)
+        // Wait until all the Swirl have fallen down before we continue.
+       // run(SKAction.wait(forDuration: longestDuration), completion: completion)
     }
     
     
     
-    // This is the main loop that removes any matching cookies and fills up the
-    // holes with new cookies. While this happens, the user cannot interact with
+    // This is the main loop that removes any matching Swirl and fills up the
+    // holes with new Swirl. While this happens, the user cannot interact with
     // the app.
     func handleMatches(swirl: Swirl) {
 
@@ -266,16 +300,15 @@ class GameScene: SKScene {
         previousMatches = level.removeMatches()
         
         // First, remove any matches...
-        animateMatchedCookies(for: previousMatches) {
-            
-            // ...then shift down any cookies that have a hole below them...
+        animateMatchedSwirl(for: previousMatches) {
+            self.previousMatches.removeAll()
+            // ...then shift down any Swirl that have a hole below them...
             let columns = self.level.fillHoles()
             let horizonatalHoles = self.level.fillRowsHorizontal()
             //let rows = self.level.fillRows()
             
-            self.animateFallingCookiesFor(columns: columns) {
-                self.animateHorizontalCookiesFor(columns: horizonatalHoles, completion: {
-                    
+            self.animateFallingSwirlFor(columns: columns) {
+                self.animateHorizontalSwirlFor(columns: horizonatalHoles, completion: {
                 })
                 // Keep repeating this cycle until there are no more matches.
                 //self.handleMatches()
@@ -283,4 +316,20 @@ class GameScene: SKScene {
         }
     }
 
+}
+
+extension SKAction {
+    class func shake(duration:CGFloat, amplitudeX:Int = 3, amplitudeY:Int = 3) -> SKAction {
+        let numberOfShakes = duration / 0.015 / 2.0
+        var actionsArray:[SKAction] = []
+        for _ in 1...Int(numberOfShakes) {
+            let dx = CGFloat(arc4random_uniform(UInt32(amplitudeX))) - CGFloat(amplitudeX / 2)
+            let dy = CGFloat(arc4random_uniform(UInt32(amplitudeY))) - CGFloat(amplitudeY / 2)
+            let forward = SKAction.moveBy(x: dx, y:dy, duration: 0.015)
+            let reverse = forward.reversed()
+            actionsArray.append(forward)
+            actionsArray.append(reverse)
+        }
+        return SKAction.sequence(actionsArray)
+    }
 }
